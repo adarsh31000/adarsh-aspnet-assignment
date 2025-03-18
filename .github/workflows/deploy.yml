@@ -1,39 +1,43 @@
-name: Deploy ASP.NET Core App to Azure
+name: Build and Deploy ASP.Net Core App to Azure Web App - adarsh-aspnet
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:  # Allows manual trigger
+      - main  # Replace with your branch if it's not 'main'
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-latest  # Change this to 'windows-latest' if using Windows containers
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup .NET Core
+      # Step 2: Setup .NET Core 8.0
+      - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '9.0.x'  # Match your .NET version
+          dotnet-version: '8.0.x'  # This ensures you're using .NET 8.0
 
-      - name: Restore dependencies
-        run: dotnet restore
-        working-directory: MyAspNetApp  # Change this to match your project folder name
+      # Step 3: List files for debugging purposes
+      - name: List files to debug
+        run: ls -R
 
+      # Step 4: Build the project
       - name: Build the project
-        run: dotnet build --configuration Release --no-restore
-        working-directory: MyAspNetApp  # Change this to match your project folder name
+        working-directory: ./MyAspNetApp  # Specify the folder where the .csproj is located
+        run: dotnet build --configuration Release
 
+      # Step 5: Publish the project
       - name: Publish the project
+        working-directory: ./MyAspNetApp  # Same as above, ensure it's the folder with your .csproj
         run: dotnet publish -c Release -o published
-        working-directory: MyAspNetApp  # Change this to match your project folder name
 
+      # Step 6: Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: "my-aspnet-app"  # Replace with your Azure App Service name
+          app-name: "adarsh-aspnet"  # Replace with your Azure App Service name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: MyAspNetApp/published  # Change this to match your project folder
+          package: ./MyAspNetApp/published  # Ensure this matches the output directory
