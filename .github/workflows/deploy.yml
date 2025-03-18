@@ -1,43 +1,25 @@
-name: Build and Deploy ASP.Net Core App to Azure Web App - adarsh-aspnet
-
-on:
-  push:
-    branches:
-      - main  # Replace with your branch if it's not 'main'
-  workflow_dispatch:
-
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest  # Change this to 'windows-latest' if using Windows containers
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      # Step 2: Setup .NET Core 8.0
-      - name: Setup .NET 8.0
-        uses: actions/setup-dotnet@v3
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'  # This ensures you're using .NET 8.0
+          dotnet-version: '8.x'
 
-      # Step 3: List files for debugging purposes
-      - name: List files to debug
-        run: ls -R
+      - name: Build with dotnet
+        run: dotnet build ./MyAspNetApp/MyAspNetApp.csproj --configuration Release
 
-      # Step 4: Build the project
-      - name: Build the project
-        working-directory: ./MyAspNetApp  # Specify the folder where the .csproj is located
-        run: dotnet build --configuration Release
+      - name: dotnet publish
+        run: dotnet publish ./MyAspNetApp/MyAspNetApp.csproj -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
-      # Step 5: Publish the project
-      - name: Publish the project
-        working-directory: ./MyAspNetApp  # Same as above, ensure it's the folder with your .csproj
-        run: dotnet publish -c Release -o published
-
-      # Step 6: Deploy to Azure Web App
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
         with:
-          app-name: "adarsh-aspnet"  # Replace with your Azure App Service name
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ./MyAspNetApp/published  # Ensure this matches the output directory
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
